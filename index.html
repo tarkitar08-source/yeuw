@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kasir Hijab Simpel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ec4899', // pink-500
+                        primaryDark: '#db2777', // pink-600
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .hidden { display: none !important; }
+        /* Animasi Pop-up */
+        .modal-active { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <header class="bg-white border-b border-gray-100 p-4 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-primary">Hijab<span class="text-gray-900">Kasir</span></h1>
+            <span id="header-date" class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full"></span>
+        </div>
+    </header>
+
+    <main class="p-4 pb-24 max-w-md mx-auto">
+        <div id="view-home" class="space-y-6 pt-4">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+                <p class="text-sm text-gray-500 mb-1">Total Penjualan Hari Ini</p>
+                <h2 class="text-3xl font-extrabold text-gray-900" id="home-total-revenue">Rp 0</h2>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="showOrderView()" class="flex flex-col items-center justify-center gap-3 bg-primary text-white p-6 rounded-2xl shadow-lg shadow-pink-100 active:scale-95 transition-all">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span class="font-bold">Pesanan Baru</span>
+                </button>
+                <button onclick="showReportView()" class="flex flex-col items-center justify-center gap-3 bg-white text-gray-800 p-6 rounded-2xl border border-gray-100 active:scale-95 transition-all">
+                    <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <span class="font-bold">Laporan</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="view-order" class="hidden space-y-4">
+            <div class="flex items-center gap-4 pt-2">
+                <button onclick="showHome()" class="p-2 bg-white rounded-full text-gray-600 border border-gray-100 shadow-sm active:scale-90">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </button>
+                <h2 class="text-xl font-bold">Pilih Hijab</h2>
+            </div>
+            
+            <input type="text" id="search-product" onkeyup="renderProducts()" placeholder="Cari merk hijab..." class="w-full p-4 rounded-xl border border-gray-200 bg-white shadow-inner focus:ring-2 focus:ring-pink-200 outline-none">
+
+            <div id="product-list" class="space-y-3">
+                </div>
+        </div>
+
+        <div id="view-report" class="hidden space-y-4">
+            <div class="flex items-center justify-between pt-2">
+                <div class="flex items-center gap-4">
+                    <button onclick="showHome()" class="p-2 bg-white rounded-full text-gray-600 border border-gray-100 shadow-sm active:scale-90">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    </button>
+                    <h2 class="text-xl font-bold">Rekap Hari Ini</h2>
+                </div>
+                <button onclick="resetSales()" class="text-xs text-red-500 font-medium">Reset Harian</button>
+            </div>
+            
+            <div id="report-list" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3 min-h-[300px]">
+                </div>
+        </div>
+    </main>
+
+    <div id="floating-cart" class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-lg hidden z-20">
+        <div class="max-w-md mx-auto flex items-center justify-between gap-4">
+            <div class="flex-1">
+                <p class="text-xs text-gray-500" id="cart-count">0 Item</p>
+                <p class="text-lg font-bold text-primary" id="cart-total-price">Rp 0</p>
+            </div>
+            <button onclick="checkout()" class="bg-green-500 text-white px-6 py-3 rounded-xl font-bold active:scale-95 transition-all">Selesai</button>
+        </div>
+    </div>
+
+    <div id="product-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-end sm:items-center justify-center transition-opacity duration-300">
+        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 space-y-5 modal-active max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold" id="modal-product-name">Merk Hijab</h3>
+                <button onclick="closeModal()" class="text-gray-400 p-1">&times;</button>
+            </div>
+
+            <div class="space-y-2">
+                <p class="text-sm font-semibold text-gray-600">Pilih Warna/Varian:</p>
+                <div id="color-options" class="flex flex-wrap gap-2">
+                    </div>
+                <p id="stock-info" class="text-xs text-gray-500 pt-1"></p>
+            </div>
+
+            <div id="qty-section" class="space-y-2 hidden">
+                <p class="text-sm font-semibold text-gray-600">Jumlah:</p>
+                <div class="flex items-center gap-4 bg-gray-100 rounded-full w-fit">
+                    <button onclick="changeQty(-1)" class="w-12 h-12 text-2xl text-primary font-bold active:scale-90">-</button>
+                    <span id="modal-qty" class="text-2xl font-bold w-10 text-center">1</span>
+                    <button onclick="changeQty(1)" class="w-12 h-12 text-2xl text-primary font-bold active:scale-90">+</button>
+                </div>
+            </div>
+
+            <button onclick="addToCart()" id="btn-add-cart" class="w-full bg-primary text-white py-4 rounded-xl font-bold disabled:bg-gray-300 transition-all active:scale-95" disabled>
+                Tambahkan ke Pesanan - <span id="modal-total-price">Rp 0</span>
+            </button>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+    ...
+</div>
+<button onclick="showAdminView()" class="w-full mt-4 flex items-center justify-center gap-3 bg-gray-800 text-white p-5 rounded-2xl shadow-lg active:scale-95 transition-all">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+    <span class="font-bold">Kelola Stok Barang</span>
+</button>
+<div id="view-admin" class="hidden space-y-4">
+    <div class="flex items-center gap-4 pt-2">
+        <button onclick="showHome()" class="p-2 bg-white rounded-full text-gray-600 border border-gray-100 shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        </button>
+        <h2 class="text-xl font-bold">Tambah Produk Baru</h2>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+        <div>
+            <label class="text-xs font-bold text-gray-400 uppercase">Merk Hijab</label>
+            <input type="text" id="new-merk" placeholder="Contoh: Bella Square" class="w-full p-3 mt-1 bg-gray-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-pink-200">
+        </div>
+        <div>
+            <label class="text-xs font-bold text-gray-400 uppercase">Harga Jual (Rp)</label>
+            <input type="number" id="new-harga" placeholder="Contoh: 25000" class="w-full p-3 mt-1 bg-gray-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-pink-200">
+        </div>
+        <div>
+            <label class="text-xs font-bold text-gray-400 uppercase">Warna & Stok (Pisahkan dengan koma)</label>
+            <textarea id="new-stok" placeholder="Hitam:10, Navy:5, Cream:8" class="w-full p-3 mt-1 bg-gray-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-pink-200" rows="3"></textarea>
+            <p class="text-[10px] text-gray-400 mt-2 leading-relaxed">Format: NamaWarna:Jumlah. Gunakan koma (,) untuk memisah warna.</p>
+        </div>
+        
+        <button onclick="addNewProduct()" class="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-pink-100 active:scale-95 transition-all">
+            Simpan ke Rak Toko
+        </button>
+    </div>
+
+    <div class="pt-4">
+        <h3 class="font-bold mb-3">Daftar Barang Saat Ini</h3>
+        <div id="admin-product-list" class="space-y-2 text-sm"></div>
+    </div>
+</div>
+
+    <script>
+        // DATA PRODUK (Tersimpan di LocalStorage)
+        let initialInventory = [
+            { id: 1, merk: "Jarum Besar", harga: 3500, stok: { "besar": 22 } },
+            { id: 2, merk: "Jarum Kecil", harga: 3000, stok: { "kecil": 22 } },
+            { id: 3, merk: "Atlas junior", harga: 60000, stok: { "random": 3 } },
+            { id: 4, merk: "Gajah duduk", harga: 55000, stok: { "random": 2 } },
+            { id: 5, merk: "Mangga junior", harga: 58000, stok: { "random": 3 } },
+            { id: 6, merk: "Al ghinna junior", harga: 50000, stok: { "random": 1 } },
+            { id: 7, merk: "Wadimor", harga: 63000, stok: { "random": 2 } },
+            { id: 8, merk: "Atlas merah", harga: 85000, stok: { "random": 7 } },
+            { id: 9, merk: "Mangga gold", harga: 70000, stok: { "random": 4 } },
+            { id: 10, merk: "jenggolo", harga: 45000, stok: { "random": 1 } },
+            { id: 11, merk: "atlas biru", harga: 65000, stok: { "random": 7 } },
+            { id: 12, merk: "wadimor strimin", harga: 85000, stok: { "random": 6 } },
+            { id: 13, merk: "Ciput tali", harga: 22000, stok: { "Hitam": 3, "Coklat": 3, "Cream": 3, "Dusty": 1 } },
+            { id: 14, merk: "Azahra Oskara", harga: 20000, stok: { "motif": 14 } },
+            { id: 15, merk: "Paris Luxury", harga: 22000, stok: { "polos": 9 } },
+            { id: 16, merk: "Azahra Polos", harga: 25000, stok: { "polos": 6 } }
+        ];
+
+        let inventory = JSON.parse(localStorage.getItem('hijabInv')) || initialInventory;
+        let cart = [];
+        let dailySales = JSON.parse(localStorage.getItem('hijabSales')) || [];
+
+        // State Modal
+        let currentEditingProduct = null;
+        let selectedColor = null;
+        let currentQty = 1;
+
+        // INIT
+        document.getElementById('header-date').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+        updateHomeUI();
+
+        function saveData() {
+            localStorage.setItem('hijabInv', JSON.stringify(inventory));
+            localStorage.setItem('hijabSales', JSON.stringify(dailySales));
+            updateHomeUI();
+        }
+
+        function hideAll() {
+            ['view-home', 'view-order', 'view-report', 'floating-cart'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        }
+
+        // --- NAVIGATION ---
+        function showHome() { hideAll(); document.getElementById('view-home').classList.remove('hidden'); updateHomeUI(); cart=[]; updateCartUI();}
+        function showOrderView() { hideAll(); document.getElementById('view-order').classList.remove('hidden'); renderProducts(); }
+        function showReportView() { hideAll(); document.getElementById('view-report').classList.remove('hidden'); renderReport(); }
+
+        function updateHomeUI() {
+            const total = dailySales.reduce((sum, s) => sum + s.total, 0);
+            document.getElementById('home-total-revenue').innerText = `Rp ${total.toLocaleString()}`;
+        }
+
+        // --- PRODUK & PENCARIAN ---
+        function renderProducts() {
+            const container = document.getElementById('product-list');
+            const keyword = document.getElementById('search-product').value.toLowerCase();
+            container.innerHTML = '';
+            
+            const filtered = inventory.filter(p => p.merk.toLowerCase().includes(keyword));
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 pt-4 text-sm">Produk tidak ditemukan.</p>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                const totalStok = Object.values(p.stok).reduce((a, b) => a + b, 0);
+                const isKosong = totalStok === 0;
+
+                const card = document.createElement('div');
+                card.className = `bg-white p-5 rounded-2xl border ${isKosong ? 'border-gray-100 opacity-60' : 'border-gray-100 shadow-sm active:scale-[0.98]'} transition-all`;
+                card.onclick = isKosong ? null : () => openModal(p);
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-gray-900 text-lg">${p.merk}</p>
+                            <p class="text-primary font-semibold">Rp ${p.harga.toLocaleString()}</p>
+                            <p class="text-xs text-gray-400 mt-1">${isKosong ? 'Habis' : totalStok + ' item tersedia'}</p>
+                        </div>
+                        ${isKosong ? '' : '<svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>'}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- LOGIKA MODAL (GANTI PROMPT) ---
+        function openModal(product) {
+            currentEditingProduct = product;
+            selectedColor = null;
+            currentQty = 1;
+            document.getElementById('modal-product-name').innerText = product.merk;
+            document.getElementById('qty-section').classList.add('hidden');
+            document.getElementById('stock-info').innerText = '';
+            document.getElementById('btn-add-cart').disabled = true;
+            document.getElementById('modal-total-price').innerText = 'Rp 0';
+            
+            // Render Pilihan Warna
+            const colorContainer = document.getElementById('color-options');
+            colorContainer.innerHTML = '';
+            
+            Object.keys(product.stok).forEach(color => {
+                const stok = product.stok[color];
+                const isHabis = stok <= 0;
+                
+                const btn = document.createElement('button');
+                btn.innerText = `${color} (${stok})`;
+                btn.className = `px-4 py-2 rounded-full border text-sm transition-all ${isHabis ? 'border-gray-100 text-gray-300 cursor-not-allowed' : 'border-gray-200 bg-white active:scale-95'}`;
+                
+                if (!isHabis) {
+                    btn.onclick = () => selectColor(color, btn);
+                }
+                colorContainer.appendChild(btn);
+            });
+
+            document.getElementById('product-modal').classList.remove('hidden');
+            setTimeout(() => document.querySelector('.modal-active').style.opacity = '1', 10);
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        function selectColor(color, btnElement) {
+            selectedColor = color;
+            currentQty = 1;
+            
+            // Visual Update Tombol
+            document.querySelectorAll('#color-options button').forEach(b => b.classList.remove('bg-primary', 'text-white', 'border-primary'));
+            btnElement.classList.add('bg-primary', 'text-white', 'border-primary');
+            
+            document.getElementById('qty-section').classList.remove('hidden');
+            document.getElementById('modal-qty').innerText = currentQty;
+            
+            updateModalPrice();
+        }
+
+        function changeQty(delta) {
+            const maxStok = currentEditingProduct.stok[selectedColor];
+            const newQty = currentQty + delta;
+            
+            if (newQty >= 1 && newQty <= maxStok) {
+                currentQty = newQty;
+                document.getElementById('modal-qty').innerText = currentQty;
+                updateModalPrice();
+            } else if (newQty > maxStok) {
+                alert(`Stok terbatas! Hanya sisa ${maxStok}`);
+            }
+        }
+
+        function updateModalPrice() {
+            const total = currentEditingProduct.harga * currentQty;
+            document.getElementById('modal-total-price').innerText = `Rp ${total.toLocaleString()}`;
+            document.getElementById('btn-add-cart').disabled = false;
+        }
+
+        // --- KERANJANG & CHECKOUT ---
+        function addToCart() {
+            // Logika Stok
+            currentEditingProduct.stok[selectedColor] -= currentQty;
+            
+            cart.push({
+                merk: currentEditingProduct.merk,
+                warna: selectedColor,
+                harga: currentEditingProduct.harga,
+                jumlah: currentQty,
+                total: currentEditingProduct.harga * currentQty,
+                invRef: currentEditingProduct // Simpan referensi objek untuk pembatalan
+            });
+            
+            updateCartUI();
+            saveData();
+            closeModal();
+            renderProducts(); // Refresh list agar stok update
+        }
+
+        function updateCartUI() {
+            const cartBar = document.getElementById('floating-cart');
+            const viewOrder = document.getElementById('view-order');
+
+            if (cart.length > 0) {
+                cartBar.classList.remove('hidden');
+                
+                const count = cart.reduce((sum, item) => sum + item.jumlah, 0);
+                const total = cart.reduce((sum, item) => sum + item.total, 0);
+                
+                document.getElementById('cart-count').innerText = `${count} Item dipilih`;
+                document.getElementById('cart-total-price').innerText = `Rp ${total.toLocaleString()}`;
+                
+                // Tambah padding bawah di list produk agar tidak tertutup bar
+                document.querySelector('#view-order #product-list').style.paddingBottom = '80px';
+            } else {
+                cartBar.classList.add('hidden');
+                document.querySelector('#view-order #product-list').style.paddingBottom = '0px';
+            }
+        }
+
+        function checkout() {
+            if (confirm("Selesaikan transaksi dan simpan pesanan?")) {
+                cart.forEach(item => {
+                    dailySales.push({
+                        ...item,
+                        invRef: null, // Hapus referensi sirkular sebelum simpan
+                        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                    });
+                });
+                saveData();
+                alert("Transaksi Berhasil!");
+                cart = [];
+                showHome();
+            }
+        }
+
+        // --- LAPORAN ---
+        function renderReport() {
+            const list = document.getElementById('report-list');
+            list.innerHTML = '';
+            
+            if (dailySales.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 pt-12 text-sm">Belum ada penjualan hari ini.</div>';
+                return;
+            }
+            
+            let grandTotal = 0;
+            dailySales.forEach(sale => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-start border-b border-gray-100 pb-3";
+                div.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-gray-800">${sale.merk} (${sale.warna})</p>
+                        <p class="text-xs text-gray-400">${sale.time} • Rp ${sale.harga.toLocaleString()} x ${sale.jumlah}</p>
+                    </div>
+                    <p class="font-bold text-gray-900 text-sm mt-1">Rp ${sale.total.toLocaleString()}</p>
+                `;
+                list.appendChild(div);
+                grandTotal += sale.total;
+            });
+            
+            // Tambah Total di paling bawah list
+            const totalDiv = document.createElement('div');
+            totalDiv.className = "pt-3 flex justify-between font-extrabold text-primary text-lg";
+            totalDiv.innerHTML = `<span>TOTAL</span><span>Rp ${grandTotal.toLocaleString()}</span>`;
+            list.appendChild(totalDiv);
+        }
+
+        function resetSales() {
+            if (confirm("Hapus semua data penjualan hari ini? Stok tidak akan dikembalikan.")) {
+                dailySales = [];
+                saveData();
+                renderReport();
+            }
+        }
+        // Navigasi ke Admin
+function showAdminView() {
+    hideAll();
+    document.getElementById('view-admin').classList.remove('hidden');
+    renderAdminProducts();
+}
+
+// Tambah Produk Baru ke Inventory
+function addNewProduct() {
+    const merk = document.getElementById('new-merk').value;
+    const harga = parseInt(document.getElementById('new-harga').value);
+    const stokRaw = document.getElementById('new-stok').value;
+
+    if (!merk || !harga || !stokRaw) {
+        alert("Harap isi semua data dengan benar!");
+        return;
+    }
+
+    // Parsing format "Hitam:10, Navy:5" menjadi objek { "Hitam": 10, "Navy": 5 }
+    let stokObj = {};
+    try {
+        const pairs = stokRaw.split(',');
+        pairs.forEach(p => {
+            const [warna, jumlah] = p.split(':');
+            if(warna && jumlah) {
+                stokObj[warna.trim()] = parseInt(jumlah.trim());
+            }
+        });
+    } catch (e) {
+        alert("Format stok salah! Ikuti contoh: Hitam:10, Navy:5");
+        return;
+    }
+
+    const newEntry = {
+        id: Date.now(), // Gunakan timestamp agar ID selalu unik
+        merk: merk,
+        harga: harga,
+        stok: stokObj
+    };
+
+    inventory.push(newEntry);
+    saveData(); // Simpan ke LocalStorage agar tidak hilang saat refresh
+    
+    // Reset Form
+    document.getElementById('new-merk').value = '';
+    document.getElementById('new-harga').value = '';
+    document.getElementById('new-stok').value = '';
+    
+    alert("Produk berhasil ditambahkan!");
+    renderAdminProducts();
+}
+
+// Render list barang di halaman admin untuk monitoring
+function renderAdminProducts() {
+    const container = document.getElementById('admin-product-list');
+    container.innerHTML = '';
+    
+    inventory.forEach((p, index) => {
+        const div = document.createElement('div');
+        div.className = "bg-white p-3 rounded-lg flex justify-between items-center border border-gray-100";
+        div.innerHTML = `
+            <span>${p.merk} - Rp ${p.harga.toLocaleString()}</span>
+            <button onclick="deleteProduct(${index})" class="text-red-400 font-bold px-2">Hapus</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function deleteProduct(index) {
+    if(confirm("Hapus produk ini dari rak?")) {
+        inventory.splice(index, 1);
+        saveData();
+        renderAdminProducts();
+    }
+}
+
+// Pastikan fungsi hideAll() juga menyertakan view-admin
+function hideAll() {
+    ['view-home', 'view-order', 'view-report', 'view-admin', 'floating-cart'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.add('hidden');
+    });
+}
+    </script>
+</body>
+</html>
